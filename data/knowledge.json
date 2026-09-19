@@ -1,0 +1,53 @@
+{
+  "menus": {
+    "main": [
+      "Agent Support",
+      "Search Knowledge Base",
+      "Browse Knowledge",
+      "Manage Knowledge",
+      "Exit"
+    ],
+    "categories": [
+      "Account Issues",
+      "Payment Issues",
+      "Internet Issues",
+      "Delivery Issues",
+      "Technical Support"
+    ],
+    "Payment Issues": [
+      "Payment Failed",
+      "Payment Pending",
+      "Refund Not Received",
+      "Money Deducted but Transaction Failed"
+    ]
+  },
+  "decisionTree": {
+    "moneyDeducted": {
+      "question": "Was money deducted from the customer's account?",
+      "options": ["Yes", "No"],
+      "next": ["transactionSuccessful", "noMoneyDeducted"]
+    },
+    "transactionSuccessful": {
+      "question": "Was the transaction marked successful?",
+      "options": ["Yes", "No"],
+      "next": ["transactionCompleted", "contactedSupport"]
+    },
+    "contactedSupport": {
+      "question": "Has the customer already contacted support?",
+      "options": ["Yes", "No"],
+      "next": ["alreadyContacted", "contactSupport"]
+    },
+    "noMoneyDeducted": {
+      "solution": "Please verify the payment details before trying the transaction again."
+    },
+    "transactionCompleted": {
+      "solution": "The transaction was successful. Confirm the transaction details with the customer."
+    },
+    "alreadyContacted": {
+      "solution": "Review the customer's existing support request and provide an update."
+    },
+    "contactSupport": {
+      "solution": "Ask the customer to contact support so the failed payment can be investigated."
+    }
+  }
+}
