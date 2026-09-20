@@ -5,19 +5,27 @@ function clearScreen() {
 function render(state, options, decisionNode) {
   clearScreen();
 
-  console.log('========================================');
+  const titles = {
+    main: 'CONTACT CENTER KNOWLEDGE BASE',
+    categories: 'CATEGORIES',
+    search: 'SEARCH KNOWLEDGE BASE',
+    searchResults: 'SEARCH RESULTS',
+    decision: state.selectedProblem?.title.toUpperCase(),
+    problems: state.selectedCategory.toUpperCase()
+  };
 
-  if (state.screen === 'main') {
-    console.log('     CONTACT CENTER KNOWLEDGE BASE');
-  } else if (state.screen === 'categories') {
-    console.log('              CATEGORIES');
-  } else if (state.screen === 'decision') {
-    console.log('          PAYMENT FAILED');
-  } else {
-    console.log(`          ${state.selectedCategory.toUpperCase()}`);
+  console.log('========================================');
+  console.log(`          ${titles[state.screen]}`);
+  console.log('========================================\n');
+
+  if (state.screen === 'search') {
+    console.log('Enter search term:\n');
+    console.log('Press ENTER to search');
   }
 
-  console.log('========================================\n');
+  if (state.screen === 'searchResults' && !options.length) {
+    console.log('No matching knowledge found.');
+  }
 
   if (state.screen === 'decision') {
     console.log(decisionNode.solution || decisionNode.question);
@@ -25,19 +33,21 @@ function render(state, options, decisionNode) {
   }
 
   options.forEach((option, index) => {
-    const marker = index === state.index ? '> ' : '  ';
-    console.log(marker + option);
+    console.log((index === state.index ? '> ' : '  ') + option);
   });
 
-  console.log('\nControls:');
-  console.log('↑ ↓ Navigate');
-  console.log('ENTER Select');
+  if (state.screen !== 'search' &&
+      !(state.screen === 'searchResults' && !options.length)) {
+    console.log('\nControls:');
+    console.log('↑ ↓ Navigate');
+    console.log('ENTER Select');
+  }
 
   if (state.screen !== 'main') {
     console.log('B Back');
+  } else {
+    console.log('Q Quit');
   }
-
-  console.log('Q Quit');
 }
 
 module.exports = {

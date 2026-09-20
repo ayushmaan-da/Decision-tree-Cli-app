@@ -14,40 +14,373 @@
       "Delivery Issues",
       "Technical Support"
     ],
+    "Account Issues": ["Forgot Password", "Account Locked"],
     "Payment Issues": [
       "Payment Failed",
       "Payment Pending",
-      "Refund Not Received",
-      "Money Deducted but Transaction Failed"
-    ]
+      "Money Deducted but Transaction Failed",
+      "Refund Not Received"
+    ],
+    "Internet Issues": ["No Internet", "Slow Internet", "Wi-Fi Not Connecting"],
+    "Delivery Issues": ["Delivery Delayed", "Wrong Item Delivered", "Item Not Received"],
+    "Technical Support": ["Device Not Working", "Application Error", "Service Unavailable"]
   },
-  "decisionTree": {
-    "moneyDeducted": {
-      "question": "Was money deducted from the customer's account?",
-      "options": ["Yes", "No"],
-      "next": ["transactionSuccessful", "noMoneyDeducted"]
-    },
-    "transactionSuccessful": {
-      "question": "Was the transaction marked successful?",
-      "options": ["Yes", "No"],
-      "next": ["transactionCompleted", "contactedSupport"]
-    },
-    "contactedSupport": {
-      "question": "Has the customer already contacted support?",
-      "options": ["Yes", "No"],
-      "next": ["alreadyContacted", "contactSupport"]
-    },
-    "noMoneyDeducted": {
-      "solution": "Please verify the payment details before trying the transaction again."
-    },
-    "transactionCompleted": {
-      "solution": "The transaction was successful. Confirm the transaction details with the customer."
-    },
-    "alreadyContacted": {
-      "solution": "Review the customer's existing support request and provide an update."
-    },
-    "contactSupport": {
-      "solution": "Ask the customer to contact support so the failed payment can be investigated."
-    }
+  "problems": {
+    "Account Issues": [
+      {
+        "id": "forgot-password",
+        "title": "Forgot Password",
+        "description": "The customer cannot remember the password for the account.",
+        "keywords": ["password", "forgot", "login"],
+        "decisionTree": {
+          "start": "verifiedContact",
+          "nodes": {
+            "verifiedContact": {
+              "question": "Can the customer access their registered email or phone?",
+              "options": ["Yes", "No"],
+              "next": ["resetPassword", "verifyAccount"]
+            },
+            "resetPassword": {
+              "solution": "Send the customer the password reset instructions and ask them to create a new password."
+            },
+            "verifyAccount": {
+              "solution": "Verify the customer's identity using the account recovery process before resetting the password."
+            }
+          }
+        }
+      },
+      {
+        "id": "account-locked",
+        "title": "Account Locked",
+        "description": "The customer's account has been locked after repeated failed attempts.",
+        "keywords": ["locked", "login", "attempts"],
+        "decisionTree": {
+          "start": "lockReason",
+          "nodes": {
+            "lockReason": {
+              "question": "Does the customer know why the account was locked?",
+              "options": ["Yes", "No"],
+              "next": ["unlockAccount", "reviewSecurity"]
+            },
+            "unlockAccount": {
+              "solution": "Follow the account unlock process and advise the customer to use the correct credentials."
+            },
+            "reviewSecurity": {
+              "solution": "Verify the customer's identity and escalate for a security review before unlocking the account."
+            }
+          }
+        }
+      }
+    ],
+    "Payment Issues": [
+      {
+        "id": "payment-failed",
+        "title": "Payment Failed",
+        "description": "A payment did not complete successfully.",
+        "keywords": ["payment", "failed", "transaction"],
+        "decisionTree": {
+          "start": "moneyDeducted",
+          "nodes": {
+            "moneyDeducted": {
+              "question": "Was money deducted from the customer's account?",
+              "options": ["Yes", "No"],
+              "next": ["transactionSuccessful", "noMoneyDeducted"]
+            },
+            "transactionSuccessful": {
+              "question": "Was the transaction marked successful?",
+              "options": ["Yes", "No"],
+              "next": ["transactionCompleted", "contactedSupport"]
+            },
+            "contactedSupport": {
+              "question": "Has the customer already contacted support?",
+              "options": ["Yes", "No"],
+              "next": ["alreadyContacted", "contactSupport"]
+            },
+            "noMoneyDeducted": {
+              "solution": "Ask the customer to retry the payment after checking their payment method and available balance. Escalate to Payment Support if it continues to fail."
+            },
+            "transactionCompleted": {
+              "solution": "The transaction was successful. Confirm the transaction details with the customer."
+            },
+            "alreadyContacted": {
+              "solution": "Review the customer's existing support request and provide an update."
+            },
+            "contactSupport": {
+              "solution": "Ask the customer to contact support so the failed payment can be investigated."
+            }
+          }
+        }
+      },
+      {
+        "id": "payment-pending",
+        "title": "Payment Pending",
+        "description": "A payment remains pending and has not completed.",
+        "keywords": ["payment", "pending", "processing"],
+        "decisionTree": {
+          "start": "pendingDuration",
+          "nodes": {
+            "pendingDuration": {
+              "question": "Has the payment been pending for more than 24 hours?",
+              "options": ["Yes", "No"],
+              "next": ["escalatePending", "waitForPayment"]
+            },
+            "escalatePending": {
+              "solution": "Check the transaction status and escalate the payment to the payment processing team."
+            },
+            "waitForPayment": {
+              "solution": "Ask the customer to wait for processing and avoid submitting the payment again."
+            }
+          }
+        }
+      },
+      {
+        "id": "money-deducted-transaction-failed",
+        "title": "Money Deducted but Transaction Failed",
+        "description": "Money was deducted even though the transaction failed.",
+        "keywords": ["deducted", "failed", "payment"],
+        "decisionTree": {
+          "start": "refundVisible",
+          "nodes": {
+            "refundVisible": {
+              "question": "Is a refund already visible in the customer's account?",
+              "options": ["Yes", "No"],
+              "next": ["confirmRefund", "investigateDeduction"]
+            },
+            "confirmRefund": {
+              "solution": "Confirm the refund amount and expected settlement time with the customer."
+            },
+            "investigateDeduction": {
+              "solution": "Collect the transaction details and escalate the deducted amount to Payment Support."
+            }
+          }
+        }
+      },
+      {
+        "id": "refund-not-received",
+        "title": "Refund Not Received",
+        "description": "The customer has not received an expected payment refund.",
+        "keywords": ["refund", "missing", "payment"],
+        "decisionTree": {
+          "start": "refundIssued",
+          "nodes": {
+            "refundIssued": {
+              "question": "Has the refund been marked as issued?",
+              "options": ["Yes", "No"],
+              "next": ["checkSettlement", "requestRefundReview"]
+            },
+            "checkSettlement": {
+              "solution": "Confirm the refund reference and settlement timeframe with the customer."
+            },
+            "requestRefundReview": {
+              "solution": "Verify the original transaction and escalate the missing refund for review."
+            }
+          }
+        }
+      }
+    ],
+    "Internet Issues": [
+      {
+        "id": "no-internet",
+        "title": "No Internet",
+        "description": "The customer's connection is offline.",
+        "keywords": ["internet", "offline", "connection"],
+        "decisionTree": {
+          "start": "routerPower",
+          "nodes": {
+            "routerPower": {
+              "question": "Is the router powered on?",
+              "options": ["Yes", "No"],
+              "next": ["checkConnection", "powerRouter"]
+            },
+            "checkConnection": {
+              "solution": "Restart the router and check the connection lights. Escalate if the service remains offline."
+            },
+            "powerRouter": {
+              "solution": "Ask the customer to connect the router to power and wait for the connection lights."
+            }
+          }
+        }
+      },
+      {
+        "id": "slow-internet",
+        "title": "Slow Internet",
+        "description": "The customer's internet connection is slower than expected.",
+        "keywords": ["internet", "slow", "speed"],
+        "decisionTree": {
+          "start": "multipleDevices",
+          "nodes": {
+            "multipleDevices": {
+              "question": "Are several devices experiencing slow speeds?",
+              "options": ["Yes", "No"],
+              "next": ["checkNetwork", "checkDevice"]
+            },
+            "checkNetwork": {
+              "solution": "Run a connection check and escalate the network issue if the speed remains below the plan rate."
+            },
+            "checkDevice": {
+              "solution": "Restart the affected device and check for downloads or applications using the connection."
+            }
+          }
+        }
+      },
+      {
+        "id": "wifi-not-connecting",
+        "title": "Wi-Fi Not Connecting",
+        "description": "The customer's device cannot join the Wi-Fi network.",
+        "keywords": ["wifi", "wireless", "connect"],
+        "decisionTree": {
+          "start": "correctPassword",
+          "nodes": {
+            "correctPassword": {
+              "question": "Is the customer using the correct Wi-Fi password?",
+              "options": ["Yes", "No"],
+              "next": ["restartWifi", "providePassword"]
+            },
+            "restartWifi": {
+              "solution": "Forget the network, restart Wi-Fi, and reconnect the device."
+            },
+            "providePassword": {
+              "solution": "Provide or reset the correct Wi-Fi password and reconnect the device."
+            }
+          }
+        }
+      }
+    ],
+    "Delivery Issues": [
+      {
+        "id": "delivery-delayed",
+        "title": "Delivery Delayed",
+        "description": "An order has not arrived by its expected delivery date.",
+        "keywords": ["delivery", "late", "order"],
+        "decisionTree": {
+          "start": "trackingUpdated",
+          "nodes": {
+            "trackingUpdated": {
+              "question": "Has the tracking information updated recently?",
+              "options": ["Yes", "No"],
+              "next": ["shareTracking", "escalateDelivery"]
+            },
+            "shareTracking": {
+              "solution": "Share the latest tracking update and expected delivery date with the customer."
+            },
+            "escalateDelivery": {
+              "solution": "Verify the delivery address and escalate the delayed shipment to the delivery team."
+            }
+          }
+        }
+      },
+      {
+        "id": "wrong-item-delivered",
+        "title": "Wrong Item Delivered",
+        "description": "The customer received an item different from what was ordered.",
+        "keywords": ["delivery", "wrong item", "order"],
+        "decisionTree": {
+          "start": "itemUnused",
+          "nodes": {
+            "itemUnused": {
+              "question": "Is the incorrect item unused and in its original condition?",
+              "options": ["Yes", "No"],
+              "next": ["arrangeReturn", "reviewReturn"]
+            },
+            "arrangeReturn": {
+              "solution": "Arrange a return and replacement for the correct item."
+            },
+            "reviewReturn": {
+              "solution": "Review the return options with the customer and escalate if the item cannot be returned."
+            }
+          }
+        }
+      },
+      {
+        "id": "item-not-received",
+        "title": "Item Not Received",
+        "description": "The order is marked delivered but the customer did not receive it.",
+        "keywords": ["delivery", "missing", "order"],
+        "decisionTree": {
+          "start": "deliveryMarked",
+          "nodes": {
+            "deliveryMarked": {
+              "question": "Is the order marked as delivered?",
+              "options": ["Yes", "No"],
+              "next": ["checkDeliveryLocation", "traceShipment"]
+            },
+            "checkDeliveryLocation": {
+              "solution": "Ask the customer to check the delivery location and contact the carrier for delivery details."
+            },
+            "traceShipment": {
+              "solution": "Check the latest tracking update and escalate the missing shipment to the delivery team."
+            }
+          }
+        }
+      }
+    ],
+    "Technical Support": [
+      {
+        "id": "device-not-working",
+        "title": "Device Not Working",
+        "description": "The customer's supported device is not functioning correctly.",
+        "keywords": ["device", "hardware", "not working"],
+        "decisionTree": {
+          "start": "devicePower",
+          "nodes": {
+            "devicePower": {
+              "question": "Does the device turn on?",
+              "options": ["Yes", "No"],
+              "next": ["restartDevice", "checkPower"]
+            },
+            "restartDevice": {
+              "solution": "Restart the device and install any available updates. Escalate if the issue continues."
+            },
+            "checkPower": {
+              "solution": "Check the power source and cable. Escalate for repair if the device still will not turn on."
+            }
+          }
+        }
+      },
+      {
+        "id": "application-error",
+        "title": "Application Error",
+        "description": "The customer sees an error while using the application.",
+        "keywords": ["application", "error", "app"],
+        "decisionTree": {
+          "start": "errorRepeats",
+          "nodes": {
+            "errorRepeats": {
+              "question": "Does the error appear again after restarting the application?",
+              "options": ["Yes", "No"],
+              "next": ["captureError", "confirmResolved"]
+            },
+            "captureError": {
+              "solution": "Record the error message and application version, then escalate to Technical Support."
+            },
+            "confirmResolved": {
+              "solution": "Confirm that the application is working normally after the restart."
+            }
+          }
+        }
+      },
+      {
+        "id": "service-unavailable",
+        "title": "Service Unavailable",
+        "description": "The customer cannot access a required service.",
+        "keywords": ["service", "unavailable", "offline"],
+        "decisionTree": {
+          "start": "serviceStatus",
+          "nodes": {
+            "serviceStatus": {
+              "question": "Is there a known service outage?",
+              "options": ["Yes", "No"],
+              "next": ["shareOutage", "checkAccount"]
+            },
+            "shareOutage": {
+              "solution": "Inform the customer about the outage and provide the current restoration estimate."
+            },
+            "checkAccount": {
+              "solution": "Check the customer's account and connection details, then escalate if the service remains unavailable."
+            }
+          }
+        }
+      }
+    ]
   }
 }

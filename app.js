@@ -1,28 +1,35 @@
 const menu = require('./src/menu');
 const decisionTree = require('./src/decisionTree');
+const knowledgeBase = require('./src/knowledgeBase');
 const ui = require('./src/ui');
 const input = require('./src/input');
 
 const state = {
   screen: 'main',
   index: 0,
-  selectedCategory: ''
+  selectedCategory: '',
+  selectedProblem: null,
+  searchTerm: '',
+  searchResults: [],
+  previousScreen: ''
 };
 
 function getOptions() {
-  if (state.screen === 'decision') {
-    return decisionTree.getOptions();
+  if (state.screen === 'decision') return decisionTree.getOptions();
+  if (state.screen === 'searchResults') {
+    return state.searchResults.map(problem => problem.title);
   }
-
   return menu.getOptions(state.screen, state.selectedCategory);
 }
 
 function render() {
-  ui.render(
-    state,
-    getOptions(),
-    decisionTree.getCurrentNode()
-  );
+  ui.render(state, getOptions(), decisionTree.getCurrentNode());
+}
+
+function resetScreen(screen) {
+  state.screen = screen;
+  state.index = 0;
+  render();
 }
 
 function exit() {
@@ -30,69 +37,101 @@ function exit() {
   console.log('\nExiting.');
 }
 
-function moveUp() {
+function move(direction) {
   const options = getOptions();
 
-  if (options.length > 0) {
+  if (options.length) {
     state.index =
-      (state.index - 1 + options.length) %
-      options.length;
+      (state.index + direction + options.length) % options.length;
   }
 
   render();
 }
 
-function moveDown() {
-  const options = getOptions();
+function startSearch() {
+  state.searchTerm = '';
+  state.searchResults = [];
+  resetScreen('search');
+  beginSearchInput();
+}
 
-  if (options.length > 0) {
-    state.index =
-      (state.index + 1) %
-      options.length;
-  }
+function beginSearchInput() {
+  input.startTextInput(
+    term => {
+      state.searchTerm = term;
+      finishSearch();
+    },
+    back,
+    exit
+  );
+}
 
-  render();
+function finishSearch() {
+  state.searchResults = knowledgeBase.search(state.searchTerm);
+  resetScreen('searchResults');
+}
+
+function handleAction(action) {
+  const actions = {
+    up: () => move(-1),
+    down: () => move(1),
+    enter: select,
+    back,
+    quit: exit
+  };
+
+  if (actions[action]) actions[action]();
 }
 
 function select() {
   const options = getOptions();
 
   if (state.screen === 'main') {
-    if (state.index === 0) {
-      state.screen = 'categories';
-      state.index = 0;
-      render();
-    } else if (state.index === options.length - 1) {
-      exit();
-    }
+    if (state.index === 0) resetScreen('categories');
+    else if (state.index === 1) startSearch();
+    else if (state.index === options.length - 1) exit();
+    return;
+  }
 
+  if (state.screen === 'search') {
+    if (state.searchTerm.trim()) finishSearch();
+    return;
+  }
+
+  if (state.screen === 'searchResults') {
+    if (!state.searchResults.length) return;
+
+    state.selectedProblem = state.searchResults[state.index];
+    state.selectedCategory = state.selectedProblem.category;
+    state.previousScreen = 'searchResults';
+    state.screen = 'decision';
+    state.index = 0;
+
+    decisionTree.start(state.selectedProblem.decisionTree);
+    render();
     return;
   }
 
   if (state.screen === 'categories') {
     state.selectedCategory = options[state.index];
-
-    if (state.selectedCategory === 'Payment Issues') {
-      state.screen = 'problems';
-      state.index = 0;
-      render();
-    } else {
-      console.log(
-        `\nNo problems available for ${state.selectedCategory}.`
-      );
-    }
-
+    resetScreen('problems');
     return;
   }
 
   if (state.screen === 'problems') {
-    if (options[state.index] === 'Payment Failed') {
+    const problem = menu.getProblem(
+      state.selectedCategory,
+      options[state.index]
+    );
+
+    if (problem) {
+      state.selectedProblem = problem;
+      state.previousScreen = 'problems';
       state.screen = 'decision';
       state.index = 0;
-      decisionTree.start();
+
+      decisionTree.start(problem.decisionTree);
       render();
-    } else {
-      console.log(`\nYou selected: ${options[state.index]}`);
     }
 
     return;
@@ -108,8 +147,15 @@ function select() {
 function back() {
   if (state.screen === 'decision') {
     if (!decisionTree.goBack()) {
-      state.screen = 'problems';
+      state.screen = state.previousScreen || 'problems';
     }
+  } else if (state.screen === 'search') {
+    state.screen = 'main';
+  } else if (state.screen === 'searchResults') {
+    state.searchTerm = '';
+    resetScreen('search');
+    beginSearchInput();
+    return;
   } else if (state.screen === 'categories') {
     state.screen = 'main';
   } else if (state.screen === 'problems') {
@@ -121,11 +167,4 @@ function back() {
 }
 
 render();
-
-input.startInput({
-  onUp: moveUp,
-  onDown: moveDown,
-  onEnter: select,
-  onBack: back,
-  onQuit: exit
-});
+input.startInput(handleAction);
