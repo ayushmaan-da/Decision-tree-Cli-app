@@ -89,6 +89,8 @@ function select() {
   if (state.screen === 'main') {
     if (state.index === 0) resetScreen('categories');
     else if (state.index === 1) startSearch();
+    else if (state.index === 2) resetScreen('browse');
+    else if (state.index === 3) resetScreen('manage');
     else if (state.index === options.length - 1) exit();
     return;
   }
@@ -160,6 +162,8 @@ function back() {
     state.screen = 'main';
   } else if (state.screen === 'problems') {
     state.screen = 'categories';
+  } else if (state.screen === 'browse' || state.screen === 'manage') {
+    state.screen = 'main';
   }
 
   state.index = 0;

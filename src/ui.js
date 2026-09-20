@@ -1,4 +1,4 @@
-function clearScreen() {
+ function clearScreen() {
   process.stdout.write('\x1b[2J\x1b[H');
 }
 
@@ -10,6 +10,8 @@ function render(state, options, decisionNode) {
     categories: 'CATEGORIES',
     search: 'SEARCH KNOWLEDGE BASE',
     searchResults: 'SEARCH RESULTS',
+    browse: 'BROWSE KNOWLEDGE',
+    manage: 'MANAGE KNOWLEDGE',
     decision: state.selectedProblem?.title.toUpperCase(),
     problems: state.selectedCategory.toUpperCase()
   };
@@ -32,22 +34,24 @@ function render(state, options, decisionNode) {
     console.log();
   }
 
+  if (state.screen === 'browse') {
+    console.log('Knowledge can currently be browsed through Agent Support.');
+  }
+
+  if (state.screen === 'manage') {
+    console.log('Knowledge management is not available in this version.');
+  }
+
   options.forEach((option, index) => {
     console.log((index === state.index ? '> ' : '  ') + option);
   });
 
-  if (state.screen !== 'search' &&
-      !(state.screen === 'searchResults' && !options.length)) {
-    console.log('\nControls:');
-    console.log('↑ ↓ Navigate');
-    console.log('ENTER Select');
-  }
-
-  if (state.screen !== 'main') {
-    console.log('B Back');
-  } else {
-    console.log('Q Quit');
-  }
+  if (state.screen === 'main') {
+  console.log('\nControls:');
+  console.log('↑ ↓ Navigate');
+  console.log('ENTER Select');
+  console.log('Q Quit');
+}
 }
 
 module.exports = {

@@ -33,44 +33,45 @@ function startTextInput(onSubmit, onBack, onQuit) {
   process.stdin.removeListener('data', dataHandler);
 
   textHandler = key => {
-    if (key[0] === 13 || key[0] === 10) {
-      if (!textBuffer.trim()) return;
+    for (const code of key) {
+      if (code === 13 || code === 10) {
+        if (!textBuffer.trim()) continue;
 
-      const term = textBuffer.trim();
+        const term = textBuffer.trim();
 
-      process.stdin.removeListener('data', textHandler);
-      textHandler = null;
-      textInputActive = false;
-      process.stdin.on('data', dataHandler);
+        process.stdin.removeListener('data', textHandler);
+        textHandler = null;
+        textInputActive = false;
+        process.stdin.on('data', dataHandler);
 
-      if (term.toLowerCase() === 'b') onBack();
-      else if (term.toLowerCase() === 'q') onQuit();
-      else onSubmit(term);
+        if (term.toLowerCase() === 'b') onBack();
+        else if (term.toLowerCase() === 'q') onQuit();
+        else onSubmit(term);
 
-      return;
-    }
-
-    if (key[0] === 3) {
-      process.stdin.removeListener('data', textHandler);
-      textHandler = null;
-      textInputActive = false;
-      onQuit();
-      return;
-    }
-
-    if (key[0] === 8 || key[0] === 127) {
-      if (textBuffer) {
-        textBuffer = textBuffer.slice(0, -1);
-        process.stdout.write('\b \b');
+        return;
       }
-      return;
-    }
 
-    const character = key.toString();
+      if (code === 3) {
+        process.stdin.removeListener('data', textHandler);
+        textHandler = null;
+        textInputActive = false;
+        onQuit();
+        return;
+      }
 
-    if (character.length === 1 && character >= ' ') {
-      textBuffer += character;
-      process.stdout.write(character);
+      if (code === 8 || code === 127) {
+        if (textBuffer) {
+          textBuffer = textBuffer.slice(0, -1);
+          process.stdout.write('\b \b');
+        }
+        continue;
+      }
+
+      if (code >= 32 && code <= 126) {
+        const character = String.fromCharCode(code);
+        textBuffer += character;
+        process.stdout.write(character);
+      }
     }
   };
 
